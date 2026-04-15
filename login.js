@@ -59,7 +59,7 @@ loginForm.addEventListener("submit", async (e) => {
             localStorage.setItem('refresh_token' , data.refresh)
             messageDiv.innerHTML = "<span style='color: green;'>Login successful! Taking you to movies...</span>";
             setTimeout(() => {
-                window.location.href = "index.html"; 
+                window.location.href = "/"; 
             }, 1000);
         }else {
             messageDiv.innerHTML = `<span style='color: red;'>Invalid Email or Password!</span>`;
