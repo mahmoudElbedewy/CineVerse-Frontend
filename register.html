@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Explorer - Register</title>
+    <link rel="stylesheet" href="ss3.css">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4221/4221484.png" type="image/png">
+</head>
+<body class="auth-body"> <div class="auth-container">
+        <div class="auth-header">
+            <h2>Create Account</h2>
+            <p class="subtitle">Join our cinematic universe today.</p>
+        </div>
+
+        <form id="register-form" class="auth-form">
+            <div class="input-group">
+                <input type="text" id="first_name" placeholder="First Name" required>
+            </div>
+            <div class="input-group">
+                <input type="text" id="last_name" placeholder="Last Name" required>
+            </div>
+            <div class="input-group">
+                <input type="email" id="email" placeholder="Email Address" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            
+            <button type="submit">Sign Up</button>
+        </form>
+
+        <div id="register-message"></div>
+
+        <div class="auth-links">
+            <p>Already have an account? <a href="login.html">Login here</a></p>
+        </div>
+    </div>
+
+    <script src="register.js"></script>
+</body>
+</html>

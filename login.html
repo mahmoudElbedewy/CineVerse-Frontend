@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Explorer - Login</title>
+    <link rel="stylesheet" href="ss3.css">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4221/4221484.png" type="image/png">
+</head>
+<body class="auth-body">
+
+    <div class="auth-container">
+        <div class="auth-header">
+            <h2>Welcome Back</h2>
+            <p class="subtitle">Ready for your next movie marathon?</p>
+        </div>
+
+        <form id="login-form" class="auth-form">
+            <div class="input-group">
+                <input type="email" id="email" placeholder="Email Address" required>
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" placeholder="Password" required>
+            </div>
+            
+            <button type="submit">Login</button>
+        </form>
+
+        <div id="login-message"></div>
+
+        <div class="auth-links">
+            <p>Don't have an account? <a href="register.html">Create one now</a></p>
+        </div>
+    </div>
+
+    <script src="login.js"></script>
+</body>
+</html>

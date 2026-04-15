@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Page Not Found - CineVerse</title>
+    <link rel="stylesheet" href="ss3.css">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/4221/4221484.png" type="image/png">
+    
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: var(--bg-primary); 
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+        }
+
+        .error-container {
+            text-align: center;
+            padding: 40px;
+            background: var(--card-bg-gradient);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 24px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .error-container h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 8rem;
+            margin: 0;
+            line-height: 1;
+            background: linear-gradient(135deg, var(--accent-color), var(--accent-alt));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        }
+
+        .error-container h2 {
+            color: var(--text-main);
+            font-size: 1.8rem;
+            margin: 10px 0 20px;
+        }
+
+        .error-container p {
+            color: var(--text-muted);
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .back-home-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 30px;
+            background: var(--accent-color);
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+
+        .back-home-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(139, 92, 246, 0.4);
+            filter: brightness(1.1);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="error-container">
+        <h1>404</h1>
+        <h2>Oops! Lost in the CineVerse</h2>
+        <p>Page not found</p>
+        <a href="index.html" class="back-home-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+            Home page
+        </a>
+    </div>
+
+</body>
+</html>

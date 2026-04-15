@@ -1,57 +1,23 @@
-# 🎬 Movies Hub - Dynamic Movie Explorer
+# 🎬 CineVerse - Frontend (UI)
 
-A responsive movie discovery app that interacts with the **OMDB API** to search for movies, view details, and manage a personal watchlist. It demonstrates efficient handling of asynchronous operations and state persistence.
+Welcome to the frontend repository of **CineVerse**, a premium AI-Powered Movie Explorer. This project features a modern Glassmorphism design and allows users to search for movies, manage a watchlist, and chat with an AI movie assistant.
 
----
+👉 **[Click here to see the Backend (Django) Repository](https://github.com/mahmoudElbedewy/cineverse-backend)**
 
-### 🚀 **[View Live Demo](https://mahmoudelbedewy.github.io/project-2/index.html)** &nbsp; | &nbsp; 💻 **[Source Code](https://github.com/mahmoudElbedewy/project-2)**
-
----
-
-## ✨ Key Features
-
-* **🔍 Real-Time Search:**
-    * Instantly fetch movie data from the OMDB API.
-    * Handles empty states and API errors gracefully.
-
-* **📋 Smart Watchlist:**
-    * **Local Storage Integration:** Save your favorite movies to watch later (data persists after closing the browser).
-    * Add/Remove movies from the watchlist with a single click.
-
-* **⚡ Performance & Optimization:**
-    * **Async/Await:** Clean and readable asynchronous code structure.
-    * **Concurrent Fetching:** Optimized data loading for faster performance.
-    * **Client-Side Filtering:** Rapidly filter search results without reloading.
-
-* **📱 Responsive Design:**
-    * Fully adaptive layout that looks great on mobile, tablet, and desktop.
+## ✨ Features
+- **Glassmorphism UI:** Premium, modern, and fully responsive design.
+- **AI Chat Interface:** A sleek chat widget mimicking native AI assistants to talk with Gemini.
+- **Advanced Filtering:** A dynamic modal panel to filter movies by year, genre, and actors.
+- **Watchlist UI:** Interactive heart buttons to save/remove movies with beautiful toast notifications.
+- **Dark/Light Mode:** Seamless theme switching.
 
 ## 🛠️ Tech Stack
+- **HTML5 & CSS3** (Custom variables, animations, flexbox/grid)
+- **Vanilla JavaScript (ES6+)** (DOM Manipulation, Fetch API, Async/Await)
 
-* **HTML5** (Semantic Structure)
-* **CSS3** (Flexbox/Grid, Animations)
-* **JavaScript (ES6+)**
-    * Fetch API & Async/Await
-    * DOM Manipulation
-    * LocalStorage API
-* **External API:** [OMDB API](http://www.omdbapi.com/)
+## 🚀 Setup Instructions
 
-## 🚀 How to Run
-
-1.  **Clone the repository:**
-    ```bash
-    git clone [https://github.com/mahmoudElbedewy/project-2.git](https://github.com/mahmoudElbedewy/project-2.git)
-    ```
-2.  **Open `index.html`** in your browser.
-3.  **Start searching for your favorite movies!**
-
-*(Note: The project uses a public API key. If you reach the daily limit, you may need to generate your own free key from OMDB)*
-
-## 👤 Author
-
-**Mahmoud Elbedewy**
-* GitHub: [@mahmoudElbedewy](https://github.com/mahmoudElbedewy)
-* LinkedIn: [Mahmoud Elbedewy](https://www.linkedin.com/in/mahmoudelbedewy)
-
----
-*⭐️ If you enjoyed this project, don't forget to star the repo!*
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/mahmoudElbedewy/CineVerse-Frontend.git](https://github.com/mahmoudElbedewy/CineVerse-Frontend.git)
+   cd CineVerse-Frontend

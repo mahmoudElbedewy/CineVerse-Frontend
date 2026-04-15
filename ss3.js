@@ -1,5 +1,5 @@
 //==========================================================================================
-//                                    DOM Element Selectors
+//                                    DOM Element Selectors
 //==========================================================================================
 
 let search = document.querySelector(".search");
@@ -17,15 +17,25 @@ let filterPanel = document.querySelector(".filter-panel");
 let applyfilterbtn = document.querySelector(".apply-filter-btn");
 let clearfilterbtn = document.querySelector(".clear-filter-btn");
 let closePanel = document.querySelector(".closePanel");
+let base_api_path = "http://127.0.0.1:8000";
+let aiInput = document.querySelector("#ai-input");
+let aiSend = document.querySelector("#ai-send");
+let chatContent = document.querySelector("#chat-content");
+let chatBox = document.querySelector("#chat-box");
+let chatToggleBtn = document.querySelector("#chat-toggle-btn");
+let aiShatWrabber = document.querySelector("#ai-chat-wrapper");
+let loginBtn = document.querySelector("#loginBtn");
+let logoutBtn = document.querySelector("#logoutBtn");
 
 //==========================================================================================
-//                                     Global Variables
+//                                     Global Variables
 //==========================================================================================
 let page = 1;
 let searchValue = "";
 let totalResults = 0;
+
 //==========================================================================================
-//                                     Helper Functions
+//                                     Helper Functions
 //==========================================================================================
 
 // Function to add event listeners to "Details" buttons on movie cards
@@ -44,6 +54,39 @@ function addDetailsButtonListeners() {
   });
 }
 
+//function to refresh token if access token expired
+async function refreshAccessToken(){
+    let refreshToken = localStorage.getItem('refresh_token')
+
+    if (!refreshToken) return false
+
+    try{
+        const response = await fetch(`${base_api_path}/api/token/refresh/` , {
+            method : 'POST',
+            headers : {
+                "Content-Type": "application/json"
+            },
+            body : JSON.stringify({ refresh: refreshToken }) // تم التعديل هنا
+        })
+
+                            if (response.status === 404) {
+                      window.location.href = "404.html";
+                    return; 
+                    }
+
+        if (response.ok){
+            let data = await response.json()
+            localStorage.setItem('access_token' , data.access)
+            return true
+        }else{
+            return false
+        }
+    }catch (error) {
+        console.error("Error refreshing token:", error);
+        return false;
+    }
+}
+
 // Function to add event listeners to favorite buttons (heart icons) on movie cards
 function addFavListener() {
   let favButtons = document.querySelectorAll(".fav-btn");
@@ -54,55 +97,85 @@ function addFavListener() {
     btn.setAttribute("data-listener-added", "true");
 
     btn.addEventListener("click", async (e) => {
-      // Added async here
-      let favorites = JSON.parse(localStorage.getItem("myWatchlist")) || [];
+      let token = localStorage.getItem('access_token')
+      if (!token) {
+          alert("Please Login or Register to add movies to your Watchlist!");
+          window.location.href = "login.html"; 
+          return;
+      }
 
       let movieData = {
-        imdbID: btn.dataset.imdbId,
-        Title: btn.dataset.title,
-        Poster: btn.dataset.poster,
-        Year: btn.dataset.year,
-        // These will now be properly fetched
-        Genre: btn.dataset.genre,
-        Actors: btn.dataset.actors,
+        imdb_id: btn.dataset.imdbId,
+        title: btn.dataset.title,
+        poster: btn.dataset.poster,
+        year: btn.dataset.year
       };
 
-      let existingIndex = favorites.findIndex(
-        (f) => f.imdbID === movieData.imdbID
-      );
+      try{
+        let response = await fetch(`${base_api_path}/api/Watchlist/toggle/` , {
+          method : "POST" ,
+          headers : {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          } , 
+          body : JSON.stringify(movieData)
+        })
+                            if (response.status === 404) {
+                      window.location.href = "404.html";
+                    return; 
+                    }
 
-      if (existingIndex !== -1) {
-        favorites.splice(existingIndex, 1);
-        btn.classList.remove("active");
-        AddRemoveMessage("Removed", "From", movieData.Title);
-      } else {
-        // If movie not in watchlist, fetch full details before adding
-        try {
-          const response = await fetch(
-            `https://www.omdbapi.com/?apikey=f7040840&i=${movieData.imdbID}`
-          );
-          const details = await response.json();
-          if (details.Response === "True") {
-            movieData.Genre = details.Genre || "N/A";
-            movieData.Actors = details.Actors || "N/A";
+        if (response.status === 401) {
+          console.log("Access Token Expired! Trying to refresh...");
+          
+          const isRefreshed = await refreshAccessToken();
+          
+          if (isRefreshed) {
+            token = localStorage.getItem("access_token");
+            
+            response = await fetch(`${base_api_path}/api/Watchlist/toggle/`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+              },
+              body : JSON.stringify(movieData)
+            });
+                                if (response.status === 404) {
+                      window.location.href = "404.html";
+                    return; 
+                    }
+          } else {
+            alert("Your session has expired. Please login again.");
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            window.location.href = "login.html";
+            return;
           }
-        } catch (error) {
-          console.error(
-            "Error fetching full movie details for watchlist:",
-            error
-          );
         }
 
-        favorites.push(movieData);
-        btn.classList.add("active");
-        AddRemoveMessage("Added", "TO", movieData.Title);
+        const result = await response.json();
+        
+        if (response.ok){
+          if (result.action === 'added'){
+            btn.classList.add("active");
+            AddRemoveMessage("Added", "TO", movieData.title);
+          }else if(result.action === 'removed'){
+            btn.classList.remove("active");
+            AddRemoveMessage("Removed", "From", movieData.title);
+            if (movies_container.dataset.mode === "watchlist") {
+                  displayMyWatchlist();
+              }
+          }else {
+            console.error("Error toggling watchlist:", result);
+            alert("Session expired! Please login again.");
+          }
+        }
+      }catch(error){
+        console.error("Network Error:", error);
       }
-      localStorage.setItem("myWatchlist", JSON.stringify(favorites));
 
-      if (movies_container.dataset.mode === "watchlist") {
-        displayMyWatchlist();
-      }
-    });
+    })
   });
 }
 
@@ -130,136 +203,164 @@ function getMovieDetails(imdbId) {
     return;
   }
 
-  let dataUrl = `https://www.omdbapi.com/?apikey=f7040840&i=${imdbId}`;
+  let dataUrl = `${base_api_path}/api/details/?i=${imdbId}`;
 
   fetch(dataUrl)
     .then((response) => response.json())
     .then((movieDetails) => {
       console.log("Movie Details:", movieDetails);
 
-      let poster =
-        movieDetails.Poster === "N/A"
-          ? "https://via.placeholder.com/300x447?text=No+Poster"
-          : movieDetails.Poster;
+      let poster = (movieDetails.Poster && movieDetails.Poster !== "N/A")
+          ? movieDetails.Poster
+          : "https://motivatevalmorgan.com/wp-content/uploads/2016/06/default-movie.jpg";
 
-      overlay.querySelector("img").src = poster;
-      overlay.querySelector(
-        "h2"
-      ).textContent = `${movieDetails.Title} (${movieDetails.Year})`;
-      overlay.querySelector(".dummy-rating-box").innerHTML = `
+      let modal = document.querySelector("#movie-details-modal");
+
+      modal.querySelector("img").src = poster;
+      modal.querySelector("img").onerror = function() {
+        this.onerror = null;
+        this.src = 'https://motivatevalmorgan.com/wp-content/uploads/2016/06/default-movie.jpg';
+      };
+
+      modal.querySelector("h2").textContent = `${movieDetails.Title} (${movieDetails.Year})`;
+      modal.querySelector(".dummy-rating-box").innerHTML = `
                 <span>IMDb: ${movieDetails.imdbRating}</span>
                 <span>Time: ${movieDetails.Runtime}</span>
                 <span>Rated: ${movieDetails.Rated}</span>
             `;
-      overlay.querySelector(".dummy-plot").textContent = movieDetails.Plot;
-      overlay.querySelector(".dummy-other-details").innerHTML = `
+      modal.querySelector(".dummy-plot").textContent = movieDetails.Plot;
+      modal.querySelector(".dummy-other-details").innerHTML = `
                 <p><strong>Genre:</strong> ${movieDetails.Genre}</p>
                 <p><strong>Director:</strong> ${movieDetails.Director}</p>
                 <p><strong>Actors:</strong> ${movieDetails.Actors}</p>
                 <p><strong>Awards:</strong> ${movieDetails.Awards}</p>
             `;
-      overlay.style.display = "flex";
+
+      document.querySelector(".overlay").style.display = "block";
+      document.querySelector("#movie-details-modal").classList.add("show-modal");
+      modal.style.display = "flex"; 
     })
     .catch((error) => console.error("Error fetching movie details:", error));
 }
 
-// Modified getMovie to fetch full details for each film
-// Modified getMovie to fetch full details for each film
 async function getMovie(searchQuery, pageNumber) {
-  let url = `https://www.omdbapi.com/?apikey=f7040840&s=${searchQuery}&page=${pageNumber}`;
+    let url = `${base_api_path}/api/search/?s=${searchQuery}&page=${pageNumber}`;
 
-  try {
-    const response = await fetch(url);
-    const data = await response.json();
+    try {
+        const response = await fetch(url);
+                            if (response.status === 404) {
+                      window.location.href = "404.html";
+                    return; 
+                    }
+        const data = await response.json();
 
-    let loadingcircle = document.querySelector(".loading");
-    if (loadingcircle) {
-      loadingcircle.style.display = "none";
-    }
+        let loadingcircle = document.querySelector(".loading");
+        if (loadingcircle) {
+            loadingcircle.style.display = "none";
+        }
 
-    console.log("Search Results Data:", data);
-    totalResults = data.totalResults;
+        totalResults = data.totalResults;
 
-    let favorites = JSON.parse(localStorage.getItem(`myWatchlist`)) || [];
+        let favorites = [];
+        let token = localStorage.getItem('access_token');
+        
+        if (token) {
+            try {
+                let favResponse = await fetch(`${base_api_path}/api/Watchlist/`, {
+                    method: 'GET',
+                    headers: {
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
 
-    if (data.Search) {
-      if (pageNumber === 1) {
-        movies_container.innerHTML = "";
-        movies_container.style.display = "grid";
-      }
-      nothing.style.display = "none";
-      const fetchDetailsPromises = data.Search.map(async (film) => {
-        const detailsResponse = await fetch(
-          `https://www.omdbapi.com/?apikey=f7040840&i=${film.imdbID}`
-        );
-        const details = await detailsResponse.json();
-        return {
-          ...film,
-          Genre: details.Genre || "N/A",
-          Actors: details.Actors || "N/A",
-        };
-      });
+                
+                if (favResponse.status === 401) {
+                    const isRefreshed = await refreshAccessToken();
+                    if (isRefreshed) {
+                        token = localStorage.getItem("access_token");
+                        favResponse = await fetch(`${base_api_path}/api/Watchlist/`, {
+                            method: 'GET',
+                            headers: {
+                                "Authorization": `Bearer ${token}`
+                            }
+                        });
+                                            if (favResponse.status === 404) {
+                      window.location.href = "404.html";
+                    return; 
+                    }
+                    }
+                }
+                
+                if (favResponse.ok) {
+                    let favData = await favResponse.json();
+                    favorites = favData.results ? favData.results : favData; 
+                }
+            } catch (error) {
+                console.error("Error fetching favorites for search comparison:", error);
+            }
+        }
 
-      const filmsWithDetails = await Promise.all(fetchDetailsPromises);
+        if (data.Search) {
+            if (pageNumber === 1) {
+                movies_container.innerHTML = "";
+                movies_container.style.display = "grid";
+            }
+            nothing.style.display = "none";
+            
+            data.Search.forEach((film, index) => {
+                let isFav = favorites.findIndex((f) => f.imdb_id === film.imdbID) !== -1;
+                let activeClass = isFav ? "active" : "";
 
-      filmsWithDetails.forEach((film, index) => {
-        let isFav = favorites.findIndex((f) => f.imdbID === film.imdbID) !== -1;
-        let activeClass = isFav ? "active" : "";
+                let safePoster = (film.Poster && film.Poster !== "N/A") 
+                    ? film.Poster 
+                    : "https://motivatevalmorgan.com/wp-content/uploads/2016/06/default-movie.jpg";
 
-        let poster =
-          film.Poster === "N/A"
-            ? "https://via.placeholder.com/300x447?text=No+Poster"
-            : film.Poster;
+                const movieCard = document.createElement("div");
+                movieCard.classList.add("movie-card");
+                movieCard.style.setProperty("--delay", `${index * 0.1}s`);
 
-        const movieCard = document.createElement("div");
-        movieCard.classList.add("movie-card");
-        movieCard.style.setProperty("--delay", `${index * 0.1}s`);
+                movieCard.innerHTML = `
+                    <div class="fav-btn ${activeClass}"
+                        data-imdb-id="${film.imdbID}"
+                        data-title="${film.Title}"
+                        data-poster="${safePoster}"
+                        data-year="${film.Year}"
+                        data-genre="N/A"
+                        data-actors="N/A">
+                        ♥
+                    </div>
+                    <img src="${safePoster}" loading="lazy" onerror="this.onerror=null; this.src='https://motivatevalmorgan.com/wp-content/uploads/2016/06/default-movie.jpg';">                    <h3>${film.Title}</h3>
+                    <div class="year">Year : ${film.Year}</div>
+                    <button class="details-btn" data-imdb-id="${film.imdbID}">Details</button>
+                `;
+                movies_container.appendChild(movieCard);
+            });
 
-        movieCard.innerHTML = `
-                        <div class="fav-btn ${activeClass}"
-                            data-imdb-id="${film.imdbID}"
-                            data-title="${film.Title}"
-                            data-poster="${film.Poster}"
-                            data-year="${film.Year}"
-                            data-genre="${film.Genre || "N/A"}"
-                            data-actors="${film.Actors || "N/A"}">
-                            ♥
-                        </div>
-                        <img src="${poster}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x447?text=No+Poster'">
-                        <h3>${film.Title}</h3>
-                        <div class="year">Year : ${film.Year}</div>
-                        <button class="details-btn" data-imdb-id="${
-                          film.imdbID
-                        }">Details</button>
-                    `;
-        movies_container.appendChild(movieCard);
-      });
-
-      addDetailsButtonListeners();
-      addFavListener();
-      checkMoreItems(totalResults, pageNumber);
-    } else {
-      // هذا الجزء كان خطأ، تم تصحيحه
-      if (pageNumber === 1) {
-        nothing.textContent = "No movies found for this name.";
+            addDetailsButtonListeners();
+            addFavListener();
+            checkMoreItems(totalResults, pageNumber);
+            
+        } else {
+            if (pageNumber === 1) {
+                nothing.textContent = "No movies found for this name.";
+                nothing.style.display = `block`;
+                movies_container.innerHTML = "";
+                movies_container.style.display = "block";
+            }
+            displayMore.style.display = `none`;
+        }
+    } catch (error) {
+        console.error("Error fetching movie data:", error);
+        let loadingcircle = document.querySelector(".loading");
+        if (loadingcircle) loadingcircle.style.display = "none";
+        nothing.textContent = "Error fetching data. Please try again later.";
         nothing.style.display = `block`;
+        displayMore.style.display = `none`;
         movies_container.innerHTML = "";
-        movies_container.style.display = "block";
-      }
-      displayMore.style.display = `none`;
     }
-  } catch (error) {
-    console.error("Error fetching movie data:", error);
-    let loadingcircle = document.querySelector(".loading");
-    if (loadingcircle) loadingcircle.style.display = "none";
-    nothing.textContent = "Error fetching data. Please try again later.";
-    nothing.style.display = `block`;
-    displayMore.style.display = `none`;
-    movies_container.innerHTML = "";
-  }
 }
 
-function displayMyWatchlist() {
+async function displayMyWatchlist() {
   movies_container.innerHTML = "";
   nothing.style.display = `none`;
   displayMore.style.display = `none`;
@@ -267,46 +368,91 @@ function displayMyWatchlist() {
   movies_container.dataset.mode = "watchlist";
   showMyWatchlistBtn.textContent = "Back to Search";
 
-  let favorites = JSON.parse(localStorage.getItem("myWatchlist")) || [];
+  let token = localStorage.getItem('access_token')
 
-  if (favorites.length === 0) {
-    nothing.textContent = "Your Watchlist is empty. Add some movies!";
-    nothing.style.display = `block`;
-    return;
+  if(!token){
+    alert("Please Login or Register to add movies to your Watchlist!");
+      window.location.href = "login.html"; 
+      return;
   }
 
-  favorites.forEach((film, index) => {
-    let poster =
-      film.Poster === "N/A"
-        ? "https://via.placeholder.com/300x447?text=No+Poster"
-        : film.Poster;
+  try{
+    let response = await fetch(`${base_api_path}/api/Watchlist/`, {
+      method : 'GET',
+      headers : {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      }
+    })
+                        if (response.status === 404) {
+                      window.location.href = "404.html";
+                    return; 
+                    }
+    
+    if (response.status === 401) {
+          console.log("Access Token Expired! Trying to refresh...");
+          const isRefreshed = await refreshAccessToken();
+          if (isRefreshed) {
+            token = localStorage.getItem("access_token");
+            response = await fetch(`${base_api_path}/api/Watchlist/`, {
+              method: "GET",
+              headers: {
+                "Authorization": `Bearer ${token}`
+              }
+            });
+                                if (response.status === 404) {
+                      window.location.href = "404.html";
+                    return; 
+                    }
+          } else {
+            alert("Your session has expired. Please login again.");
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("refresh_token");
+            window.location.href = "login.html";
+            return;
+          }
+        }
 
-    const movieCard = document.createElement("div");
-    movieCard.classList.add("movie-card");
-    movieCard.style.setProperty("--delay", `${index * 0.1}s`);
+    const data = await response.json() 
+    const favorites = data.results ? data.results : data; 
 
-    movieCard.innerHTML = `
-            <div class="fav-btn active"
-                data-imdb-id="${film.imdbID}"
-                data-title="${film.Title}"
-                data-poster="${film.Poster}"
-                data-year="${film.Year}"
-                data-genre="${film.Genre || "N/A"}"
-                data-actors="${film.Actors || "N/A"}">
-                ♥
-            </div>
-            <img src="${poster}" loading="lazy" onerror="this.src='https://via.placeholder.com/300x447?text=No+Poster'">
-            <h3>${film.Title}</h3>
-            <div class="year">Year : ${film.Year}</div>
-            <button class="details-btn" data-imdb-id="${
-              film.imdbID
-            }">Details</button>
-        `;
-    movies_container.appendChild(movieCard);
-  });
+    if (favorites.length === 0) {
+      nothing.textContent = "Your Watchlist is empty. Add some movies!";
+      nothing.style.display = `block`;
+      return;
+    }
 
-  addDetailsButtonListeners();
-  addFavListener();
+    favorites.forEach((film, index) => {
+      let safePoster = (film.poster && film.poster !== "N/A") 
+          ? film.poster 
+          : "https://motivatevalmorgan.com/wp-content/uploads/2016/06/default-movie.jpg";  
+      const movieCard = document.createElement("div");
+      movieCard.classList.add("movie-card");
+      movieCard.style.setProperty("--delay", `${index * 0.1}s`);
+  
+      movieCard.innerHTML = `
+              <div class="fav-btn active"
+                  data-imdb-id="${film.imdb_id}"
+                  data-title="${film.title}"
+                  data-poster="${safePoster}"
+                  data-year="${film.year}"
+                  data-genre="N/A"
+                  data-actors="N/A">
+                  ♥
+              </div>
+              <img src="${safePoster}" loading="lazy" onerror="this.onerror=null; this.src='https://motivatevalmorgan.com/wp-content/uploads/2016/06/default-movie.jpg';">              <h3>${film.title}</h3>
+              <div class="year">Year : ${film.year}</div>
+              <button class="details-btn" data-imdb-id="${film.imdb_id}">Details</button>
+          `;
+      movies_container.appendChild(movieCard);
+    });
+    addDetailsButtonListeners();
+    addFavListener();
+  }catch (error) {
+      console.error("Error fetching watchlist:", error);
+      nothing.textContent = "Error loading Watchlist.";
+      nothing.style.display = `block`;
+  }
 }
 
 function AddRemoveMessage(atr, atr2, film) {
@@ -407,11 +553,18 @@ if (showMyWatchlistBtn) {
 
 closeOverlayBtn.addEventListener("click", () => {
   overlay.style.display = "none";
+  document.querySelector("#movie-details-modal").classList.remove("show-modal");
 });
 
 overlay.addEventListener("click", (e) => {
   if (e.target === overlay) {
-    closeOverlayBtn.click();
+    overlay.style.display = "none";
+    
+    let modal = document.querySelector("#movie-details-modal");
+    if(modal) modal.classList.remove("show-modal");
+    
+    let filterPanel = document.querySelector(".filter-panel");
+    if(filterPanel) filterPanel.className = "filter-panel";
   }
 });
 
@@ -437,14 +590,22 @@ function goBackToLastSearch() {
   input.focus();
 }
 filter.addEventListener("click", () => {
-  filterPanel.classList.toggle("show-panel");
-  closeswich();
+    filterPanel.className = "filter-panel active"; 
+    overlay.style.display = "block";
 });
 
 closePanel.addEventListener("click", () => {
-  filterPanel.classList.remove("show-panel");
-  closeswich();
+    filterPanel.className = "filter-panel";
+    overlay.style.display = "none";
 });
+
+overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+        filterPanel.className = "filter-panel";
+        overlay.style.display = "none";
+    }
+});
+
 function closeswich() {
   if (filterPanel.classList.contains("show-panel")) {
     filter.innerHTML = `
@@ -611,7 +772,6 @@ if (localStorage.getItem("theme") === "light") {
   themeSwitch.classList.add("active-light");
 }
 
-// 3. لما تضغط على الزرار
 themeSwitch.addEventListener("click", () => {
   body.classList.toggle("light-mode");
 
@@ -623,3 +783,210 @@ themeSwitch.addEventListener("click", () => {
     localStorage.setItem("theme", "dark");
   }
 });
+
+//===============================================
+//          gemeni functions
+//===============================================
+
+let chatHistory = [];
+
+chatToggleBtn.addEventListener("click", () => {
+    e.stopPropagation(); 
+    chatBox.classList.remove('hidden');
+    aiShatWrabber.style.zIndex = "1050";
+    document.getElementById('ai-input').focus();});
+
+aiSend.addEventListener("click", async () => {
+    const message = aiInput.value.trim();
+    if (!message) return; 
+
+    appendChat("You", message);
+    aiInput.value = "";
+
+    chatHistory.push({ role: "user", text: message });
+
+    try {
+        const response = await fetch(`${base_api_path}/api/chat/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                message: message,
+                history: chatHistory 
+            })
+        });
+                            if (response.status === 404) {
+                      window.location.href = "404.html";
+                    return; 
+                    }
+        const data = await response.json();
+
+        if (response.ok && data.reply) {
+            chatHistory.push({ role: "model", text: data.reply });
+            processGeminiResponse(data.reply); 
+        } else {
+            appendChat("System", "عذراً، حدث خطأ في السيرفر: " + (data.error || "Internal Server Error"));
+            chatHistory.pop(); 
+        }
+        
+    } catch (e) {
+        appendChat("System", "Error connecting to AI. Is the server running?");
+        console.error(e);
+        chatHistory.pop();
+    }
+});
+
+function appendChat(sender, text) {
+    const msg = document.createElement("div");
+    msg.style.padding = "5px";
+    msg.style.borderBottom = "1px solid #444";
+    msg.innerHTML = `<strong>${sender}:</strong> ${text}`;
+    chatContent.appendChild(msg);
+    chatContent.scrollTop = chatContent.scrollHeight; 
+}
+
+function processGeminiResponse(reply) {
+    if (reply.includes("ACTION: SEARCH")) {
+        
+        const moviesMatch = reply.match(/MOVIES:\s*(.+)/i);
+        
+        if (moviesMatch) {
+            const moviesArray = moviesMatch[1].split(','); 
+            
+            appendChat("Gemini", `Searching for: ${moviesMatch[1]}...`);
+            
+            movies_container.innerHTML = "";
+            nothing.style.display = "none";
+
+            displayMore.style.display = "none";
+            
+            moviesArray.forEach(async (movieName) => {
+                let cleanTitle = movieName.trim();
+                if (!cleanTitle) return; 
+
+                try {
+                    const response = await fetch(`${base_api_path}/api/search/?s=${cleanTitle}`);
+
+                    if (response.status === 404) {
+                      window.location.href = "404.html";
+                    return; 
+                    }
+                    const data = await response.json();
+                    
+                    if (data.Search && data.Search.length > 0) {
+                        const film = data.Search[0]; 
+                        
+                        let safePoster = (film.Poster && film.Poster !== "N/A") 
+                            ? film.Poster 
+                            : "https://motivatevalmorgan.com/wp-content/uploads/2016/06/default-movie.jpg";
+                        const movieCard = document.createElement("div");
+                        movieCard.classList.add("movie-card"); 
+                        
+                        movieCard.innerHTML = `
+                            <div class="fav-btn"
+                                data-imdb-id="${film.imdbID}"
+                                data-title="${film.Title}"
+                                data-poster="${safePoster}"
+                                data-year="${film.Year}"
+                                data-genre="N/A"
+                                data-actors="N/A">
+                                ♥
+                            </div>
+                            <img src="${safePoster}" loading="lazy" onerror="this.onerror=null; this.src='https://motivatevalmorgan.com/wp-content/uploads/2016/06/default-movie.jpg';">                            <h3>${film.Title}</h3>
+                            <div class="year">Year : ${film.Year}</div>
+                            <button class="details-btn" data-imdb-id="${film.imdbID}">Details</button>
+                        `;
+                        
+                        movies_container.appendChild(movieCard);
+
+                        addDetailsButtonListeners();
+                        addFavListener();
+                    }
+                } catch (error) {
+                    console.error(`Error fetching movie: ${cleanTitle}`, error);
+                }
+            });
+        }
+        
+    } else {
+        let formattedReply = reply.replace(/\n/g, "<br>");
+        appendChat("Gemini", formattedReply);
+    }
+}
+
+document.getElementById('chat-toggle-btn').addEventListener('click', () => {
+    document.getElementById('chat-box').classList.remove('hidden');
+    aiShatWrabber.style.zIndex = 1050
+});
+
+document.getElementById('close-chat-btn').addEventListener('click', () => {
+    document.getElementById('chat-box').classList.add('hidden');
+    aiShatWrabber.style.zIndex = -1000
+});
+
+
+function checkAuthStatus() {
+    let accessToken = localStorage.getItem("access_token"); 
+    
+    if (accessToken) {
+        if (logoutBtn) logoutBtn.classList.remove("hidden");
+        if (loginBtn) loginBtn.classList.add("hidden");
+    } else {
+        if (logoutBtn) logoutBtn.classList.add("hidden");
+        if (loginBtn) loginBtn.classList.remove("hidden");
+    }
+}
+
+checkAuthStatus();
+
+logoutBtn.addEventListener("click", async () => {
+    let refreshToken = localStorage.getItem("refresh_token"); 
+    
+    if (refreshToken) {
+        try {
+            await fetch(`${base_api_path}/api/logout/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ refresh: refreshToken })
+            });
+            
+        } catch (error) {
+            console.error("Error during logout:", error);
+        }
+    }
+
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    
+    window.location.reload(); 
+});
+
+if (closeOverlayBtn) {
+  closeOverlayBtn.addEventListener("click", () => {
+    overlay.style.display = "none";
+    let modal = document.querySelector("#movie-details-modal");
+    if(modal) modal.classList.remove("show-modal");
+  });
+}
+
+let closeDetailsBtn = document.querySelector("#movie-details-modal .x");
+if (closeDetailsBtn) {
+    closeDetailsBtn.addEventListener("click", () => {
+        document.querySelector(".overlay").style.display = "none";
+        document.querySelector("#movie-details-modal").style.display = "none";
+    });
+}
+
+let mainOverlay = document.querySelector(".overlay");
+if (mainOverlay) {
+    mainOverlay.addEventListener("click", (e) => {
+        if (e.target === mainOverlay) {
+            mainOverlay.style.display = "none";
+            document.querySelector("#movie-details-modal").style.display = "none";
+            
+            let filterPanel = document.querySelector(".filter-panel");
+            if(filterPanel) filterPanel.className = "filter-panel";
+        }
+    });
+}
