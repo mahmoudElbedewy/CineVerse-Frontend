@@ -1,4 +1,4 @@
-let base_api_path = "http://127.0.0.1:8000"; // رابط الباك إند بتاعنا
+let base_api_path = "https://cineverse.pythonanywhere.com"; // رابط الباك إند بتاعنا
 let registerForm = document.getElementById("register-form");
 let messageDiv = document.getElementById("register-message");
 

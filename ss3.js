@@ -17,7 +17,6 @@ let filterPanel = document.querySelector(".filter-panel");
 let applyfilterbtn = document.querySelector(".apply-filter-btn");
 let clearfilterbtn = document.querySelector(".clear-filter-btn");
 let closePanel = document.querySelector(".closePanel");
-let base_api_path = "http://127.0.0.1:8000";
 let aiInput = document.querySelector("#ai-input");
 let aiSend = document.querySelector("#ai-send");
 let chatContent = document.querySelector("#chat-content");
@@ -26,6 +25,7 @@ let chatToggleBtn = document.querySelector("#chat-toggle-btn");
 let aiShatWrabber = document.querySelector("#ai-chat-wrapper");
 let loginBtn = document.querySelector("#loginBtn");
 let logoutBtn = document.querySelector("#logoutBtn");
+let base_api_path = "https://cineverse.pythonanywhere.com";
 
 //==========================================================================================
 //                                     Global Variables

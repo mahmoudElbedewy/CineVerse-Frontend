@@ -1,4 +1,4 @@
-let base_api_path = "http://127.0.0.1:8000";
+let base_api_path = "https://cineverse.pythonanywhere.com";
 let loginForm = document.getElementById("login-form");
 let messageDiv = document.getElementById("login-message");
 
