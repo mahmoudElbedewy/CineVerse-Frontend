@@ -26,7 +26,7 @@ registerForm.addEventListener("submit", async (e) => {
         if (response.status === 201){
             messageDiv.innerHTML = "<span style='color: green;'>Account created successfully! Redirecting to login...</span>";
             setTimeout(() => {
-                window.location.href = "login.html";
+                window.location.href = "/login/";
             }, 2000);
         }else{
             console.log(data)

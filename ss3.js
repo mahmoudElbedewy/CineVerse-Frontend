@@ -100,7 +100,7 @@ function addFavListener() {
       let token = localStorage.getItem('access_token')
       if (!token) {
           alert("Please Login or Register to add movies to your Watchlist!");
-          window.location.href = "login.html"; 
+          window.location.href = "/login/"; 
           return;
       }
 
@@ -149,7 +149,7 @@ function addFavListener() {
             alert("Your session has expired. Please login again.");
             localStorage.removeItem("access_token");
             localStorage.removeItem("refresh_token");
-            window.location.href = "login.html";
+            window.location.href = "/login/";
             return;
           }
         }
@@ -372,7 +372,7 @@ async function displayMyWatchlist() {
 
   if(!token){
     alert("Please Login or Register to add movies to your Watchlist!");
-      window.location.href = "login.html"; 
+      window.location.href = "/login/"; 
       return;
   }
 
@@ -408,7 +408,7 @@ async function displayMyWatchlist() {
             alert("Your session has expired. Please login again.");
             localStorage.removeItem("access_token");
             localStorage.removeItem("refresh_token");
-            window.location.href = "login.html";
+            window.location.href = "/login/";
             return;
           }
         }
